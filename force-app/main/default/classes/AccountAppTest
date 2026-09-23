@@ -1,0 +1,36 @@
+@IsTest
+public class AccountAppTest {
+
+    @IsTest
+    static void testAccountHandlerAndUtility() {
+        Test.startTest();
+        Account testAcc = new Account(Name = '   test corporation   ');
+        insert testAcc;
+        Test.stopTest();
+
+        // Verify utility and handler logic executed
+        Account insertedAcc = [SELECT Name, Rating, Description FROM Account WHERE Id = :testAcc.Id];
+        System.assertEquals('Test Corporation', insertedAcc.Name, 'Name should be trimmed and formatted.');
+        System.assertEquals('Warm', insertedAcc.Rating, 'Rating should default to Warm.');
+        System.assert(insertedAcc.Description != null, 'Description should be populated.');
+    }
+
+    @IsTest
+    static void testDataCleanupBatch() {
+        // Insert test data without description
+        List<Account> testAccounts = new List<Account>();
+        for (Integer i = 0; i < 5; i++) {
+            testAccounts.add(new Account(Name = 'Batch Test ' + i));
+        }
+        insert testAccounts;
+
+        Test.startTest();
+        DataCleanupBatch batchJob = new DataCleanupBatch();
+        Id batchId = Database.executeBatch(batchJob);
+        Test.stopTest();
+
+        // Verify batch updated the records
+        Integer updatedCount = [SELECT COUNT() FROM Account WHERE Description = 'Processed by DataCleanupBatch'];
+        System.assert(updatedCount > 0, 'Batch should have processed and updated account descriptions.');
+    }
+}

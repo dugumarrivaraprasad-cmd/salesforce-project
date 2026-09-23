@@ -3,7 +3,7 @@ public class DataCleanupBatch implements Database.Batchable<sObject>, Database.S
     public Integer recordsProcessed = 0;
 
     public Database.QueryLocator start(Database.BatchableContext BC) {
-        return Database.getQueryLocator([SELECT Id, Description FROM Account WHERE Description = null]);
+        return Database.getQueryLocator([SELECT Id, Description FROM Account]);
     }
 
     public void execute(Database.BatchableContext BC, List<Account> scope) {

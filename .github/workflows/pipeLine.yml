@@ -48,29 +48,30 @@ jobs:
       - name: Install sfdx-git-delta
         run: echo y | sf plugins install sfdx-git-delta
 
+      # CHANGED: Updated secret names to match your repository secrets (DEV_ORG, SIT_ORG, UAT_ORG, PRODUCTION_ORG)
       - name: Set Environment Variables by Branch
         run: |
           if [ "${{ github.ref_name }}" == "develop" ] || \
              [ "${{ github.base_ref }}" == "develop" ]; then
-            echo "AUTH_URL=${{ secrets.SALESFORCE_AUTH_URL_DEV }}" >> $GITHUB_ENV
+            echo "AUTH_URL=${{ secrets.DEV_ORG }}" >> $GITHUB_ENV
             echo "TEST_LEVEL=NoTestRun" >> $GITHUB_ENV
             echo "ENV_NAME=DEV" >> $GITHUB_ENV
 
           elif [ "${{ github.ref_name }}" == "sit" ] || \
                [ "${{ github.base_ref }}" == "sit" ]; then
-            echo "AUTH_URL=${{ secrets.SALESFORCE_AUTH_URL_SIT }}" >> $GITHUB_ENV
+            echo "AUTH_URL=${{ secrets.SIT_ORG }}" >> $GITHUB_ENV
             echo "TEST_LEVEL=RunLocalTests" >> $GITHUB_ENV
             echo "ENV_NAME=SIT" >> $GITHUB_ENV
 
           elif [ "${{ github.ref_name }}" == "uat" ] || \
                [ "${{ github.base_ref }}" == "uat" ]; then
-            echo "AUTH_URL=${{ secrets.SALESFORCE_AUTH_URL_UAT }}" >> $GITHUB_ENV
+            echo "AUTH_URL=${{ secrets.UAT_ORG }}" >> $GITHUB_ENV
             echo "TEST_LEVEL=RunLocalTests" >> $GITHUB_ENV
             echo "ENV_NAME=UAT" >> $GITHUB_ENV
 
           elif [ "${{ github.ref_name }}" == "main" ] || \
                [ "${{ github.base_ref }}" == "main" ]; then
-            echo "AUTH_URL=${{ secrets.SALESFORCE_AUTH_URL_PROD }}" >> $GITHUB_ENV
+            echo "AUTH_URL=${{ secrets.PRODUCTION_ORG }}" >> $GITHUB_ENV
             echo "TEST_LEVEL=RunAllTestsInOrg" >> $GITHUB_ENV
             echo "ENV_NAME=PROD" >> $GITHUB_ENV
           fi
@@ -82,12 +83,19 @@ jobs:
             --set-default \
             --sfdx-url-stdin
 
+      # CHANGED: Dynamically compare against PR base branch during PRs, or HEAD~1 during pushes
       - name: Generate Delta Package
         run: |
           mkdir -p delta
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            FROM_REF="origin/${{ github.base_ref }}"
+          else
+            FROM_REF="HEAD~1"
+          fi
+
           sf sgd source delta \
             --to HEAD \
-            --from HEAD~1 \
+            --from "$FROM_REF" \
             --output-dir delta \
             --source-dir force-app \
             --generate-delta

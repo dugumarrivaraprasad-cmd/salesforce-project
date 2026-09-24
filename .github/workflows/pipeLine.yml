@@ -18,16 +18,16 @@ name: Salesforce Delta Pipeline
 on:
   push:
     branches:
-      - develop
+      - dev
       - sit
-      - uat
-      - main
+      - UAT
+      - production
   pull_request:
     branches:
-      - develop
+      - dev
       - sit
-      - uat
-      - main
+      - UAT
+      - production
 
 jobs:
   deploy:
@@ -56,8 +56,8 @@ jobs:
 
       - name: Set Environment Variables by Branch
         run: |
-          if [ "${{ github.ref_name }}" == "develop" ] || \
-             [ "${{ github.base_ref }}" == "develop" ]; then
+          if [ "${{ github.ref_name }}" == "dev" ] || \
+             [ "${{ github.base_ref }}" == "dev" ]; then
             echo "AUTH_URL=${{ secrets.DEV_ORG }}" >> $GITHUB_ENV
             echo "TEST_LEVEL=NoTestRun" >> $GITHUB_ENV
             echo "ENV_NAME=DEV" >> $GITHUB_ENV
@@ -68,14 +68,14 @@ jobs:
             echo "TEST_LEVEL=RunLocalTests" >> $GITHUB_ENV
             echo "ENV_NAME=SIT" >> $GITHUB_ENV
 
-          elif [ "${{ github.ref_name }}" == "uat" ] || \
-               [ "${{ github.base_ref }}" == "uat" ]; then
+          elif [ "${{ github.ref_name }}" == "UAT" ] || \
+               [ "${{ github.base_ref }}" == "UAT" ]; then
             echo "AUTH_URL=${{ secrets.UAT_ORG }}" >> $GITHUB_ENV
             echo "TEST_LEVEL=RunLocalTests" >> $GITHUB_ENV
             echo "ENV_NAME=UAT" >> $GITHUB_ENV
 
-          elif [ "${{ github.ref_name }}" == "main" ] || \
-               [ "${{ github.base_ref }}" == "main" ]; then
+          elif [ "${{ github.ref_name }}" == "production" ] || \
+               [ "${{ github.base_ref }}" == "production" ]; then
             echo "AUTH_URL=${{ secrets.PRODUCTION_ORG }}" >> $GITHUB_ENV
             echo "TEST_LEVEL=RunAllTestsInOrg" >> $GITHUB_ENV
             echo "ENV_NAME=PROD" >> $GITHUB_ENV

@@ -33,6 +33,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    # Declaring these here resolves all "Context access might be invalid" linter warnings
+    env:
+      AUTH_URL: ''
+      ENV_NAME: ''
+      TEST_LEVEL: ''
+
     steps:
 
       - name: Checkout Full Git History
@@ -48,7 +54,6 @@ jobs:
       - name: Install sfdx-git-delta
         run: echo y | sf plugins install sfdx-git-delta
 
-      # CHANGED: Updated secret names to match your repository secrets (DEV_ORG, SIT_ORG, UAT_ORG, PRODUCTION_ORG)
       - name: Set Environment Variables by Branch
         run: |
           if [ "${{ github.ref_name }}" == "develop" ] || \
@@ -78,12 +83,11 @@ jobs:
 
       - name: Authenticate to Salesforce (${{ env.ENV_NAME }})
         run: |
-          echo "${{ env.AUTH_URL }}" | sf org login sfdx-url \
+          echo "$AUTH_URL" | sf org login sfdx-url \
             --alias target-org \
             --set-default \
             --sfdx-url-stdin
 
-      # CHANGED: Dynamically compare against PR base branch during PRs, or HEAD~1 during pushes
       - name: Generate Delta Package
         run: |
           mkdir -p delta
@@ -99,21 +103,21 @@ jobs:
             --output-dir delta \
             --source-dir force-app \
             --generate-delta
-          echo "====== Delta Components for ${{ env.ENV_NAME }} ======"
+          echo "====== Delta Components for $ENV_NAME ======"
           cat delta/package/package.xml
 
       - name: Validate Delta (${{ env.ENV_NAME }})
         if: github.event_name == 'pull_request'
         run: |
           if grep -q '<members>' delta/package/package.xml; then
-            VALIDATE_TEST_LEVEL=${{ env.TEST_LEVEL }}
+            VALIDATE_TEST_LEVEL="$TEST_LEVEL"
             if [ "$VALIDATE_TEST_LEVEL" == "NoTestRun" ]; then
               VALIDATE_TEST_LEVEL="RunLocalTests"
             fi
             sf project deploy validate \
               --manifest delta/package/package.xml \
               --target-org target-org \
-              --test-level $VALIDATE_TEST_LEVEL \
+              --test-level "$VALIDATE_TEST_LEVEL" \
               --wait 60
           else
             echo "No Salesforce metadata changes found. Skipping validation."
@@ -126,7 +130,7 @@ jobs:
             sf project deploy start \
               --manifest delta/package/package.xml \
               --target-org target-org \
-              --test-level ${{ env.TEST_LEVEL }} \
+              --test-level "$TEST_LEVEL" \
               --wait 60
           else
             echo "No Salesforce metadata changes found. Skipping deployment."

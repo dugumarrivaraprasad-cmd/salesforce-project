@@ -1,4 +1,4 @@
-# ================================================================
+# ==============================================================
 # Salesforce Delta Deployment Pipeline
 #
 # FLOW:
@@ -11,7 +11,7 @@
 # sit     → SIT Sandbox    (RunLocalTests)
 # uat     → UAT Sandbox    (RunLocalTests)
 # main    → PRODUCTION     (RunAllTestsInOrg)
-# ================================================================
+# ==============================================================
 
 name: Salesforce Delta Pipeline
 
